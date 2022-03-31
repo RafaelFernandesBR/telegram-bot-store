@@ -1,0 +1,159 @@
+﻿using Telegram.Bot;
+using Telegram.Bot.Exceptions;
+using Telegram.Bot.Extensions.Polling;
+using Telegram.Bot.Types;
+using Telegram.Bot.Types.Enums;
+using Newtonsoft.Json;
+using telegram.TratarChat;
+using telegram.tokem;
+using telegram.validator;
+
+StreamReader r = new StreamReader("telegram.json");
+string readFile = r.ReadToEnd();
+TelegramTokem telegramTokem = JsonConvert.DeserializeObject<TelegramTokem>(readFile);
+
+var botClient = new TelegramBotClient(telegramTokem.tokem);
+var fin = new trataChat();
+var valida = new validator();
+
+using var cts = new CancellationTokenSource();
+
+// StartReceiving does not block the caller thread. Receiving is done on the ThreadPool.
+var receiverOptions = new ReceiverOptions
+{
+    AllowedUpdates = { } // receive all update types
+};
+botClient.StartReceiving(
+HandleUpdateAsync,
+HandleErrorAsync,
+receiverOptions,
+cancellationToken: cts.Token);
+
+var me = await botClient.GetMeAsync();
+
+Console.WriteLine($"Start listening for @{me.Username}");
+
+//definindo para fechar o programa no terminal com ctrl+c
+var cancellationTokenSource = new CancellationTokenSource();
+AppDomain.CurrentDomain.ProcessExit += (s, e) => cancellationTokenSource.Cancel();
+Console.CancelKeyPress += (s, e) => cancellationTokenSource.Cancel();
+await Task.Delay(-1, cancellationTokenSource.Token).ContinueWith(t => { });
+
+// Send cancellation request to stop bot
+cts.Cancel();
+
+async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+{
+    // Only process Message updates: https://core.telegram.org/bots/api#message
+    if (update.Type != UpdateType.Message)
+        return;
+    // Only process text messages
+    if (update.Message!.Type != MessageType.Text)
+        return;
+
+    var chatId = update.Message.Chat.Id;
+    var messageText = update.Message.Text;
+
+    if (messageText == "todos")
+    {
+        var msgSend = fin.todos();
+
+        Message sentMessage = await botClient.SendTextMessageAsync(
+        chatId: chatId,
+        text: msgSend,
+        replyToMessageId: update.Message.MessageId,
+        cancellationToken: cancellationToken);
+    }
+
+    else if (messageText.Contains("/add") == true)
+    {
+        bool admin = valida.validarUser(Convert.ToString(chatId));
+
+        if (admin == true)
+        {
+            //remover /comando da string
+            string texto = messageText.Replace("/del", "");
+            //Separar o textos com algumas regras
+            string[] dados = texto.Split('\n');
+            string nome = dados[0].Replace("/add nome: ", "");
+            string vercao = dados[1].Replace("verção: ", "");
+            string descricao = dados[2].Replace("descrição: ", "");
+            string url = dados[3].Replace("url: ", "");
+
+            string msgSend = fin.incluir(nome, vercao, descricao, url);
+
+            Message sentMessage = await botClient.SendTextMessageAsync(
+            chatId: chatId,
+            text: msgSend,
+            replyToMessageId: update.Message.MessageId,
+            cancellationToken: cancellationToken);
+        }
+        else
+        {
+            Message sentMessage = await botClient.SendTextMessageAsync(
+    chatId: chatId,
+    text: "Comando não permitido para este usuário.",
+    replyToMessageId: update.Message.MessageId,
+    cancellationToken: cancellationToken);
+        }
+    }
+
+    else if (messageText.Contains("/del") == true)
+    {
+        bool admin = valida.validarUser(Convert.ToString(chatId));
+
+        if (admin == true)
+        {
+        //remover /comando da string
+        string texto = messageText.Replace("/del", "");
+        string msgSend = fin.apagar(Convert.ToInt32(texto));
+
+        Message sentMessage = await botClient.SendTextMessageAsync(
+        chatId: chatId,
+        text: msgSend,
+        replyToMessageId: update.Message.MessageId,
+        cancellationToken: cancellationToken);
+        }
+                else
+        {
+            Message sentMessage = await botClient.SendTextMessageAsync(
+    chatId: chatId,
+    text: "Comando não permitido para este usuário.",
+    replyToMessageId: update.Message.MessageId,
+    cancellationToken: cancellationToken);
+        }
+    }
+
+    else if (messageText.Contains("/p") == true)
+    {
+        //remover /p da string
+        string texto = messageText.Replace("/p", "");
+        string msgSend = fin.pesquiza(texto);
+
+        Message sentMessage = await botClient.SendTextMessageAsync(
+        chatId: chatId,
+        text: msgSend,
+        replyToMessageId: update.Message.MessageId,
+        cancellationToken: cancellationToken);
+    }
+    else
+    {
+        Message sentMessage = await botClient.SendTextMessageAsync(
+        chatId: chatId,
+        text: "Comando inválido.",
+        replyToMessageId: update.Message.MessageId,
+        cancellationToken: cancellationToken);
+    }
+}
+Task HandleErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
+{
+    var ErrorMessage = exception switch
+    {
+        ApiRequestException apiRequestException
+        => $"Telegram API Error:\n[{apiRequestException.ErrorCode}]\n{apiRequestException.Message}",
+        _ => exception.ToString()
+    };
+
+    Console.WriteLine(ErrorMessage);
+    return Task.CompletedTask;
+}
