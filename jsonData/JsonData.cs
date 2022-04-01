@@ -24,17 +24,7 @@ namespace Telegram.jsonData
             tt.Insert("INSERT INTO aplicativosLojas(nome, vercao, descricao, url) VALUES('" + nome + "','" + vercao + "','" + descricao + "','" + url + "')");
             return "Incluido com sucesso!";
         }
-/*
-        public string getId(int id)
-        {
-            dataInfo tt = new dataInfo();
-            //get data
-            var final = tt.GetId("SELECT * FROM aplicativosLojas WHERE id = " + id + ";");
-                        var json = JsonConvert.SerializeObject(final);
 
-            return json;
-        }
-*/
         public string deleteId(int id)
         {
             dataInfo tt = new dataInfo();
