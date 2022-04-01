@@ -21,7 +21,7 @@ namespace Telegram.jsonData
         {
             dataInfo tt = new dataInfo();
                 //inserte data
-            tt.Insert("INSERT INTO aplicativosLojas(nome, vercao, descricao, url) VALUES('" + nome + "','" + vercao + "','" + descricao + "','" + url + "')");
+            tt.DeleteAndInsert("INSERT INTO aplicativosLojas(nome, vercao, descricao, url) VALUES('" + nome + "','" + vercao + "','" + descricao + "','" + url + "')");
             return "Incluido com sucesso!";
         }
 
@@ -29,7 +29,7 @@ namespace Telegram.jsonData
         {
             dataInfo tt = new dataInfo();
             //delete data
-            tt.Delete("DELETE FROM aplicativosLojas WHERE id = " + id + ";");
+            tt.DeleteAndInsert("DELETE FROM aplicativosLojas WHERE id = " + id + ";");
             return "Deletado com sucesso.";
         }
     }

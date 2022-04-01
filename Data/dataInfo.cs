@@ -63,23 +63,10 @@ var data=GetAllFClass(query);
 return data;
 }
 
-//return app for id.
-        public List<dataInfo> GetId(string query)
-        {
-var data=GetAllFClass(query);
-return data;
-}
-
 //delet fron id
-        public void Delete(string query)
+        public void DeleteAndInsert(string query)
         {
 DeletInsert(query);
-}
-
-//insert a data fron mysql.
-public void Insert(string query)
-{
-            DeletInsert(query);
 }
 
 }
