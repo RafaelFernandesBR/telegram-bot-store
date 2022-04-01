@@ -54,7 +54,7 @@ async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, Cancel
     var chatId = update.Message.Chat.Id;
     var messageText = update.Message.Text;
 
-    if (messageText == "todos")
+    if (messageText == "/todos")
     {
         var msgSend = fin.todos();
 
@@ -97,6 +97,15 @@ async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, Cancel
     cancellationToken: cancellationToken);
         }
     }
+
+    else if (messageText.Contains("/start") == true)
+{
+        Message sentMessage = await botClient.SendTextMessageAsync(
+        chatId: chatId,
+        text: "Bem vindo ao telegram bot store",
+        replyToMessageId: update.Message.MessageId,
+        cancellationToken: cancellationToken);
+}
 
     else if (messageText.Contains("/del") == true)
     {
